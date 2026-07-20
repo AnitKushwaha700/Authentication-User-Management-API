@@ -138,4 +138,22 @@ export const getProfile = async (req, res) => {
   }
 };
 
+// ---------------------- LogOut --------------------------- //
 
+export const logoutUser = async (req, res) => {
+  try {
+    res.clearCookie("token");
+
+    return res.status(200).json({
+      success: true,
+      message: "Logout Successful",
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
