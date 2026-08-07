@@ -119,14 +119,23 @@ export const loginUser = async (req, res) => {
   }
 };
 
-// ----------------------------- Get Profile --------------------------------- //
+// ----------------------------- Get Profile -------------------------------- //
 
 export const getProfile = async (req, res) => {
   try {
+    const user = await User.findById(req.user.id).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
     return res.status(200).json({
       success: true,
       message: "Profile Fetched Successfully",
-      user: req.user,
+      user: user,
     });
   } catch (error) {
     console.error(error);
@@ -135,6 +144,46 @@ export const getProfile = async (req, res) => {
       success: false,
       message: "Internal Server Error",
     });
+  }
+};
+
+// ---------------------- Update-Profile --------------------------- //
+
+export const updateProfile = async (req, res) => {
+  try {
+    const { name, email } = req.body;
+
+    if (!name || !email) {
+      return res.status(400).json({
+        success: false,
+        message: "Name and Email are Required",
+      });
+    }
+
+    // Check duplicate email
+    const existingUser = await User.findOne({ email });
+
+    if (existingUser && existingUser._id.toString() !== req.user.id) {
+      return res.status(409).json({
+        success: false,
+        message: "Email alredy exists",
+      });
+    }
+
+    // Update user
+    const updateUser = await User.findByIdAndUpdate(
+      req.user.id,
+      {
+        name,
+        email,
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+  } catch (error) {
+    console.error();
   }
 };
 
