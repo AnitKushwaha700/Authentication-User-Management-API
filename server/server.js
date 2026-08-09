@@ -5,6 +5,7 @@ import authRouter from "./src/routes/auth.route.js";
 import cookieParser from "cookie-parser";
 
 dotenv.config();
+
 connectDB();
 
 const app = express();
