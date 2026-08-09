@@ -10,8 +10,9 @@ connectDB();
 
 const app = express();
 
-app.use(express.json());
 app.use(cookieParser());
+
+app.use(express.json());
 app.use("/auth", authRouter);
 
 const PORT = process.env.PORT || 5000;

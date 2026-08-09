@@ -29,9 +29,10 @@ const userSchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: true,
-  }
+    timestamps: true, // Automatically stores when the user was created and last updated
+  },
 );
+
 
 const User = mongoose.model("User", userSchema);
 

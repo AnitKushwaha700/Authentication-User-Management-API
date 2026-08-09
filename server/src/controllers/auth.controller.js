@@ -5,7 +5,6 @@ import jwt from "jsonwebtoken";
 export const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
-
     // Required Fields Validations
     if (!name || !email || !password) {
       return res.status(400).json({
@@ -43,6 +42,7 @@ export const registerUser = async (req, res) => {
         email: user.email,
       },
     });
+    
   } catch (error) {
     console.error(error);
 
@@ -57,9 +57,9 @@ export const registerUser = async (req, res) => {
 
 export const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
 
     // Validation
+    const { email, password } = req.body;
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -69,7 +69,6 @@ export const loginUser = async (req, res) => {
 
     // Find User
     const user = await User.findOne({ email });
-
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -79,7 +78,6 @@ export const loginUser = async (req, res) => {
 
     // Compare Password
     const isPasswordMatch = await bcrypt.compare(password, user.password);
-
     if (!isPasswordMatch) {
       return res.status(401).json({
         success: false,
