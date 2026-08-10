@@ -2,26 +2,21 @@ import jwt from "jsonwebtoken";
 
 const authMiddleware = (req, res, next) => {
   try {
-    // 1. get Cookie form the token
-    const token = req.cookies.token;
+    const token = req.cookies.token;                              // 1. get Cookie form the token
 
-    // 2. Token exist ot not
-    if (!token) {
+    if (!token) {                                                 // 2. Token exist ot not
       return res.status(401).json({
         success: false,
         message: "Access Denied. No Token Found.",
       });
     }
 
-    // 3. Token Verify
-    const decode = jwt.verify(token, process.env.JWT_SECRET);
+    const decode = jwt.verify(token, process.env.JWT_SECRET);      // 3. Token Verify
 
-    // 4. Add request in User information
-    req.user = decode;
+    req.user = decode;                                             // 4. Add request in User information
 
-    // 5. Next middleware or Controller
-    next();
-
+    next();                                                        // 5. Next middleware or Controller
+    
   } catch (error) {
     console.error(error);
     return res.status(401).json({

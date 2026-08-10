@@ -27,12 +27,14 @@ export const registerUser = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     console.log("Hashed: ", hashedPassword);
 
+    // For Creating User Document in MongoDB  ( SAVE USER )
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
     });
 
+    // Response
     return res.status(201).json({
       success: true,
       message: "User Registered Successfully",
@@ -42,7 +44,6 @@ export const registerUser = async (req, res) => {
         email: user.email,
       },
     });
-    
   } catch (error) {
     console.error(error);
 
@@ -57,7 +58,6 @@ export const registerUser = async (req, res) => {
 
 export const loginUser = async (req, res) => {
   try {
-
     // Validation
     const { email, password } = req.body;
     if (!email || !password) {
@@ -91,6 +91,7 @@ export const loginUser = async (req, res) => {
       email: user.email,
       role: user.role,
     };
+    6;
 
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
       expiresIn: "1d",
@@ -169,7 +170,7 @@ export const updateProfile = async (req, res) => {
     }
 
     // Update user
-    const updateUser = await User.findByIdAndUpdate(
+    const updatedUser = await User.findByIdAndUpdate(
       req.user.id,
       {
         name,
@@ -179,9 +180,26 @@ export const updateProfile = async (req, res) => {
         new: true,
         runValidators: true,
       },
-    );
+    ).select("-password");
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile Updated Successfully",
+      data: updatedUser,
+    });
   } catch (error) {
-    console.error();
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message,
+    });
   }
 };
 
