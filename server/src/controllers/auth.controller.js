@@ -58,7 +58,7 @@ export const registerUser = async (req, res) => {
 
 // ------------------------------ LOGIN ------------------------------------- //
 
-export const loginUser = async (req, res) => {
+export const loginUser = async (req, res, next) => {
   try {
     // Validation
     const { email, password } = req.body;
@@ -111,12 +111,7 @@ export const loginUser = async (req, res) => {
       message: "Login Successful",
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
+    next(error);
   }
 };
 
@@ -324,6 +319,7 @@ export const deleteAccount = async (req, res) => {
   }
 };
 
+// ------------------------------ Admin-Dashboard ------------------------------------- //
 
 export const adminDashboard = async (req, res) => {
   return res.status(200).json({
@@ -331,4 +327,133 @@ export const adminDashboard = async (req, res) => {
     message: "Welcome to Admin Dashboard",
     user: req.user,
   });
+};
+
+// ------------------------------ Get-All-Users ------------------------------------- //
+
+export const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find().select("-password");
+
+    return res.status(200).json({
+      success: true,
+      message: "Users fetched successfully",
+      count: users.length,
+      data: users,
+    });
+  } catch (error) {
+    console.log(error);
+
+    return res.status(200).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
+// ------------------------------ Delete-Users-By-Admin ------------------------------------- //
+
+export const deleteUserByAdmin = async (req, res) => {
+  try {
+    // Get user ID from URL
+    const userId = req.params.id;
+
+    // Check if user exists
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Prevent admin from deleting himself
+    if (user._id.toString() === req.user.id) {
+      return res.status(400).json({
+        success: false,
+        message: "Admin cannot delete himself",
+      });
+    }
+
+    // Delete user
+    await User.findByIdAndDelete(userId);
+
+    return res.status(200).json({
+      success: true,
+      message: "User deleted successfully",
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
+// ------------------------------ Update-User-Role ------------------------------------- //
+
+export const updateUserRole = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { role } = req.body;
+
+    // Validate role
+    if (!role) {
+      return res.status(400).json({
+        success: false,
+        message: "Role is required",
+      });
+    }
+
+    if (!["user", "admin"].includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid role",
+      });
+    }
+
+    // Find target user
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Prevent admin from changing his own role
+    if (user._id.toString() === req.user.id) {
+      return res.status(400).json({
+        success: false,
+        message: "You cannot change your own role",
+      });
+    }
+
+    // Update role
+    user.role = role;
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "User role updated successfully",
+      data: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
 };
