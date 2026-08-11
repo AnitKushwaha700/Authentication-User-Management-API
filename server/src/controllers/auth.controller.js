@@ -19,6 +19,7 @@ export const registerUser = async (req, res) => {
       });
     }
 
+    // Hash Password
     const hashedPassword = await bcrypt.hash(password, 10);
     console.log("Hashed: ", hashedPassword);
 
@@ -53,14 +54,7 @@ export const registerUser = async (req, res) => {
 
 export const loginUser = async (req, res, next) => {
   try {
-    // Validation
     const { email, password } = req.body;
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "Email and Password are Required",
-      });
-    }
 
     // Find User
     const user = await User.findOne({ email });
@@ -80,7 +74,7 @@ export const loginUser = async (req, res, next) => {
       });
     }
 
-    // Password Match
+    // JWT Payload
     const payload = {
       id: user._id,
       email: user.email,
@@ -94,7 +88,7 @@ export const loginUser = async (req, res, next) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: false,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       maxAge: 24 * 60 * 60 * 1000,
     });
@@ -102,6 +96,14 @@ export const loginUser = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       message: "Login Successful",
+      data: {
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+      },
     });
   } catch (error) {
     next(error);
@@ -197,7 +199,11 @@ export const updateProfile = async (req, res) => {
 
 export const logoutUser = async (req, res) => {
   try {
-    res.clearCookie("token");
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
 
     return res.status(200).json({
       success: true,
