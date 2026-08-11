@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import connectDB from "./src/config/db.js";
 import authRouter from "./src/routes/auth.route.js";
 import errorMiddleware from "./src/middlewares/error.middleware.js";
+import notFoundMiddleware from "./src/middlewares/notFound.middleware.js";
 import cookieParser from "cookie-parser";
 
 dotenv.config();
@@ -16,6 +17,8 @@ app.use(cookieParser());
 
 app.use("/auth", authRouter);
 
+// 404 Middleware
+app.use(notFoundMiddleware);
 
 // Error Middleware
 app.use(errorMiddleware);
