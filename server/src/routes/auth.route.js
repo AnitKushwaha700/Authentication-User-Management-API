@@ -1,7 +1,10 @@
 import express from "express";
 import authMiddleware from "../middlewares/auth.middleware.js";
 import adminMiddleware from "../middlewares/role.middleware.js";
-import { registerValidator } from "../validators/auth.validators.js";
+import {
+  registerValidator,
+  loginValidator,
+} from "../validators/auth.validators.js";
 import {
   loginUser,
   registerUser,
@@ -19,10 +22,10 @@ import {
 const router = express.Router();
 
 router.post("/register", registerValidator, registerUser);
-router.post("/login", loginUser);
+router.post("/login", loginValidator, loginUser);
 router.get("/profile", authMiddleware, getProfile);
 router.put("/profile", authMiddleware, updateProfile);
-router.put("/change-password", authMiddleware, changePassword);
+router.patch("/change-password", authMiddleware, changePassword);
 router.delete("/account", authMiddleware, deleteAccount);
 router.post("/logout", logoutUser);
 router.get("/admin", authMiddleware, adminMiddleware, adminDashboard);
