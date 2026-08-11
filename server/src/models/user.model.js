@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
-      minlength: 6,
+      minlength: 4,
     },
 
     role: {
@@ -29,7 +29,7 @@ const userSchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: true, // Automatically stores when the user was created and last updated
+    timestamps: true,            // Automatically stores when the user was created and last updated
   },
 );
 

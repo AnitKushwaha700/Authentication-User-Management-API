@@ -2,6 +2,8 @@ import User from "../models/user.model.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
+// ------------------------------ REGISTER ------------------------------------- //
+
 export const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -118,7 +120,7 @@ export const loginUser = async (req, res) => {
   }
 };
 
-// ----------------------------- Get Profile -------------------------------- //
+// --------------------------------- Get Profile -------------------------------- //
 
 export const getProfile = async (req, res) => {
   try {
@@ -146,7 +148,7 @@ export const getProfile = async (req, res) => {
   }
 };
 
-// ---------------------- Update-Profile --------------------------- //
+// ------------------------------ Update-Profile --------------------------- //
 
 export const updateProfile = async (req, res) => {
   try {
@@ -221,4 +223,112 @@ export const logoutUser = async (req, res) => {
       message: "Internal Server Error",
     });
   }
+};
+
+// ------------------------------ Change-Password ------------------------------------- //
+
+export const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    // 1. Validation
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Current password and new password are required",
+      });
+    }
+
+    // 2. Find logged-in user
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // 3. Check current password
+    const isPasswordMatch = await bcrypt.compare(
+      currentPassword,
+      user.password,
+    );
+
+    if (!isPasswordMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Current password is incorrect",
+      });
+    }
+
+    // 4. Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // 5. Update password
+    user.password = hashedPassword;
+
+    // 6. Save user
+    await user.save();
+
+    // 7. Response
+    return res.status(200).json({
+      success: true,
+      message: "Password changed successfully",
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
+// ------------------------------ Delete-Account ------------------------------------- //
+
+export const deleteAccount = async (req, res) => {
+  try {
+    // Find logged-in user
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Delete user
+    await User.findByIdAndDelete(req.user.id);
+
+    // Clear JWT cookie
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Account deleted successfully",
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
+
+export const adminDashboard = async (req, res) => {
+  return res.status(200).json({
+    success: true,
+    message: "Welcome to Admin Dashboard",
+    user: req.user,
+  });
 };
