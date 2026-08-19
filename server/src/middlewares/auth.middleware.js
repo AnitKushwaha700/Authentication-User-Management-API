@@ -2,12 +2,12 @@ import jwt from "jsonwebtoken";
 
 const authMiddleware = (req, res, next) => {
   try {
-    const token = req.cookies.token;                              // 1. get Cookie form the token
+    const token = req.cookies.accessToken;                              // 1. get Cookie form the token
     
     if (!token) {                                                 // 2. Token exist ot not
       return res.status(401).json({
         success: false,
-        message: "Access Denied. No Token Found.",
+        message: "Authentication required",
       });
     }
     
@@ -18,11 +18,11 @@ const authMiddleware = (req, res, next) => {
     next();                                                        // 5. Next middleware or Controller
     
   } catch (error) {
-    console.error("AUTH ERROR :", error);
-
+    console.error(error);
+    
     return res.status(401).json({
       success: false,
-      message: "Invalid or Expired Token",
+      message: "Access token expired or invalid",
     });
   }
 };

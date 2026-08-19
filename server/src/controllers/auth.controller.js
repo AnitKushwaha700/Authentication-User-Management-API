@@ -87,27 +87,74 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    // Password Match
-    const payload = {
-      id: user._id,
-      email: user.email,
-      role: user.role,
-    };
+    // const payload = {
+    //   id: user._id,
+    //   email: user.email,
+    //   role: user.role,
+    // };
 
-    const token = jwt.sign(payload, process.env.JWT_SECRET, {
-      expiresIn: "1d",
+    // const token = jwt.sign(payload, process.env.JWT_SECRET, {
+    //   expiresIn: "1d",
+    // });
+
+    // res.cookie("token", token, {
+    //   httpOnly: true,
+    //   secure: process.env.NODE_ENV === "production",
+    //   sameSite: "lax",
+    //   maxAge: 24 * 60 * 60 * 1000,
+    // });
+
+    // Create Access Token
+    const accessToken = jwt.sign(
+      {
+        id: user._id,
+        email: user._email,
+        role: user._role,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "15m",
+      },
+    );
+
+    // Create Refresh Token
+    const refreshToken = jwt.sign(
+      {
+        id: user._id,
+      },
+      process.env.REFRESH_TOKEN_SECRET,
+      {
+        expiresIn: "7d",
+      },
+    );
+
+    // Store Access Token in cookie
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 15 * 6 * 1000,
     });
 
-    res.cookie("token", token, {
+    // Store Refresh Token in Cookie
+    res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: false,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 24 * 60 * 60 * 1000,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     return res.status(200).json({
       success: true,
       message: "Login Successful",
+      data: {
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+      },
     });
   } catch (error) {
     console.error(error);
@@ -115,6 +162,52 @@ export const loginUser = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Internal Server Error",
+    });
+  }
+};
+
+// ----------------------------- Refresh Token -------------------------------- //
+
+export const refreshAccessToken = (req, res) => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+      return res.status(401).json({
+        success: false,
+        message: "Refresh token not found",
+      });
+    }
+
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+
+    const newAccessToken = jwt.sign(
+      {
+        id: decoded.id,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "15m",
+      },
+    );
+
+    res.cookie("accessToken", newAccessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 15 * 60 * 1000,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Access token refreshed",
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(401).json({
+      success: false,
+      message: "Invalid or expired refresh token",
     });
   }
 };
@@ -182,20 +275,23 @@ export const updateProfile = async (req, res) => {
         runValidators: true,
       },
     );
-  } catch (error) {
-    console.error();
-  }
-};
 
-// ---------------------- LogOut --------------------------- //
-
-export const logoutUser = async (req, res) => {
-  try {
-    res.clearCookie("token");
+    if (!updateUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
 
     return res.status(200).json({
       success: true,
-      message: "Logout Successful",
+      message: "Profile Updated Successfully",
+      data: {
+        id: updateUser._id,
+        name: updateUser.name,
+        email: updateUser.email,
+        role: updateUser.role,
+      },
     });
   } catch (error) {
     console.error(error);
@@ -205,4 +301,25 @@ export const logoutUser = async (req, res) => {
       message: "Internal Server Error",
     });
   }
+};
+
+// ---------------------- LogOut --------------------------- //
+
+export const logoutUser = (req, res) => {
+  res.clearCookie("accessToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+  });
+
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secrure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: "Logout Successful",
+  });
 };
