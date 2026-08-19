@@ -2,6 +2,8 @@ import User from "../models/user.model.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
+// ------------------------------ REGISTER-USER ------------------------------------- //
+
 export const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -53,7 +55,7 @@ export const registerUser = async (req, res) => {
   }
 };
 
-// ------------------------------ LOGIN ------------------------------------- //
+// ------------------------------ LOGIN-USER ------------------------------------- //
 
 export const loginUser = async (req, res) => {
   try {
@@ -149,7 +151,7 @@ export const loginUser = async (req, res) => {
   }
 };
 
-// ----------------------------- Refresh Token -------------------------------- //
+// ----------------------------- Refresh-Token -------------------------------- //
 
 export const refreshAccessToken = (req, res) => {
   try {
@@ -195,7 +197,7 @@ export const refreshAccessToken = (req, res) => {
   }
 };
 
-// ----------------------------- Get Profile -------------------------------- //
+// --------------------------------- Get-Profile ------------------------------------ //
 
 export const getProfile = async (req, res) => {
   try {
@@ -223,7 +225,7 @@ export const getProfile = async (req, res) => {
   }
 };
 
-// ---------------------- Update-Profile --------------------------- //
+// ------------------------------ Update-Profile ------------------------------ //
 
 export const updateProfile = async (req, res) => {
   try {
@@ -286,7 +288,7 @@ export const updateProfile = async (req, res) => {
   }
 };
 
-// ---------------------- LogOut --------------------------- //
+// ---------------------------------- LOGOUT --------------------------------- //
 
 export const logoutUser = (req, res) => {
   res.clearCookie("accessToken", {
