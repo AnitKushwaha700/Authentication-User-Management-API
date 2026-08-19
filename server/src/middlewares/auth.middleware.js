@@ -13,6 +13,8 @@ const authMiddleware = (req, res, next) => {
     
     const decode = jwt.verify(token, process.env.JWT_SECRET);      // 3. Token Verify
     
+    console.log("Decode JWT:", decode);
+    
     req.user = decode;                                             // 4. Add request in User information
     
     next();                                                        // 5. Next middleware or Controller
