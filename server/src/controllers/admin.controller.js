@@ -38,12 +38,7 @@ export const getAllUsers = async (req, res) => {
       data: users,
     });
   } catch (error) {
-    console.error("Get All Users Error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
+    next(error);
   }
 };
 
@@ -117,7 +112,7 @@ export const updateUserRole = async (req, res) => {
       {
         new: true,
         runValidators: true,
-      }
+      },
     ).select("-password");
 
     // User not found
@@ -135,6 +130,53 @@ export const updateUserRole = async (req, res) => {
     });
   } catch (error) {
     console.error("Update User Role Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
+// ------------------------------ Delete-User ------------------------------------- //
+
+export const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Validate MongoDB ID
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid user ID",
+      });
+    }
+
+    // Prevent admin from deleting themselves
+    if (id === req.user.id) {
+      return res.status(400).json({
+        success: false,
+        message: "You cannot delete your own account",
+      });
+    }
+
+    // Find and delete user
+    const user = await User.findByIdAndDelete(id);
+
+    // User not found
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "User deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete User Error:", error);
 
     return res.status(500).json({
       success: false,

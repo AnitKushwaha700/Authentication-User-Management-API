@@ -7,6 +7,7 @@ import {
   getAllUsers,
   getUserById,
   updateUserRole,
+  deleteUser,
 } from "../controllers/admin.controller.js";
 
 const router = express.Router();
@@ -20,6 +21,13 @@ router.patch(
   authMiddleware,
   authorizeRoles("admin"),
   updateUserRole,
+);
+
+router.delete(
+  "/users/:id",
+  authMiddleware,
+  authorizeRoles("admin"),
+  deleteUser,
 );
 
 export default router;

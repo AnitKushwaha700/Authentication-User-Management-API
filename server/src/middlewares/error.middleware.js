@@ -1,5 +1,5 @@
-const errorMiddleware = (err, req, res, next) => {
-  console.error("ERROR:", err);
+const errorMiddleware = (error, req, res, next) => {
+  console.error("ERROR:", error);
 
   return res.status(500).json({
     success: false,
