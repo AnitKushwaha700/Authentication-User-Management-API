@@ -28,7 +28,7 @@ export const adminDashboard = async (req, res) => {
 
 // ------------------------------ Get-All-Users ------------------------------------- //
 
-export const getAllUsers = async (req, res) => {
+export const getAllUsers = async (req, res, next) => {
   try {
     const users = await User.find().select("-password");
 
@@ -44,7 +44,7 @@ export const getAllUsers = async (req, res) => {
 
 // ------------------------------ Get-Users-By-Id ---------------------------------- //
 
-export const getUserById = async (req, res) => {
+export const getUserById = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -82,7 +82,7 @@ export const getUserById = async (req, res) => {
 
 // ------------------------------ Update-User-Role ------------------------------------- //
 
-export const updateUserRole = async (req, res) => {
+export const updateUserRole = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { role } = req.body;
@@ -140,7 +140,7 @@ export const updateUserRole = async (req, res) => {
 
 // ------------------------------ Delete-User ------------------------------------- //
 
-export const deleteUser = async (req, res) => {
+export const deleteUser = async (req, res, next) => {
   try {
     const { id } = req.params;
 
