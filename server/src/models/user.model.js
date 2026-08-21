@@ -24,15 +24,23 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["user", "admin"],
+      enum: ["user", "admin", "restaurant"],
       default: "user",
+    },
+    resetPasswordToken: {
+      type: String,
+      default: null,
+    },
+
+    resetPasswordExpires: {
+      type: Date,
+      default: null,
     },
   },
   {
-    timestamps: true,            // Automatically stores when the user was created and last updated
+    timestamps: true, // Automatically stores when the user was created and last updated
   },
 );
-
 
 const User = mongoose.model("User", userSchema);
 

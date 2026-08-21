@@ -10,6 +10,8 @@ import {
   deleteUser,
 } from "../controllers/admin.controller.js";
 
+import { updateRoleValidator } from "../validators/admin.validator.js";
+
 const router = express.Router();
 
 router.get("/users", authMiddleware, authorizeRoles("admin"), getAllUsers);
@@ -20,6 +22,7 @@ router.patch(
   "/users/:id/role",
   authMiddleware,
   authorizeRoles("admin"),
+  updateRoleValidator,
   updateUserRole,
 );
 

@@ -95,16 +95,6 @@ export const updateUserRole = async (req, res, next) => {
       });
     }
 
-    // Validate role
-    const allowedRoles = ["user", "admin", "restaurant"];
-
-    if (!allowedRoles.includes(role)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid role",
-      });
-    }
-
     // Find and update user
     const user = await User.findByIdAndUpdate(
       id,
@@ -129,12 +119,7 @@ export const updateUserRole = async (req, res, next) => {
       data: user,
     });
   } catch (error) {
-    console.error("Update User Role Error:", error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
+    next(error);
   }
 };
 
