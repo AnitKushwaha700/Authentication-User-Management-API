@@ -27,6 +27,7 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "admin", "restaurant"],
       default: "user",
     },
+
     resetPasswordToken: {
       type: String,
       default: null,
@@ -34,6 +35,11 @@ const userSchema = new mongoose.Schema(
 
     resetPasswordExpires: {
       type: Date,
+      default: null,
+    },
+    
+    refreshToken: {
+      type: String,
       default: null,
     },
   },

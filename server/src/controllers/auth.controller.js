@@ -114,6 +114,15 @@ export const loginUser = async (req, res) => {
       },
     );
 
+    const hashedRefreshToken = crypto
+      .createHash("sha256")
+      .update(refreshToken)
+      .digest("hex");
+
+    user.refreshToken = hashedRefreshToken;
+
+    await user.save();
+
     // Store Access Token in cookie
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
@@ -154,7 +163,7 @@ export const loginUser = async (req, res) => {
 
 // ----------------------------- Refresh-Token -------------------------------- //
 
-export const refreshAccessToken = (req, res) => {
+export const refreshAccessToken = async (req, res, next) => {
   try {
     const refreshToken = req.cookies.refreshToken;
 
@@ -165,11 +174,34 @@ export const refreshAccessToken = (req, res) => {
       });
     }
 
+    // Verify refresh token
     const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
 
+    // Hash received refresh token
+    const hashedRefreshToken = crypto
+      .createHash("sha256")
+      .update(refreshToken)
+      .digest("hex");
+
+    // Find user with this refresh token
+    const user = await User.findOne({
+      _id: decoded.id,
+      refreshToken: hashedRefreshToken,
+    });
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid refresh token",
+      });
+    }
+
+    // Create new access token
     const newAccessToken = jwt.sign(
       {
-        id: decoded.id,
+        id: user._id,
+        email: user.email,
+        role: user.role,
       },
       process.env.JWT_SECRET,
       {
@@ -177,6 +209,29 @@ export const refreshAccessToken = (req, res) => {
       },
     );
 
+    // Create new refresh token
+    const newRefreshToken = jwt.sign(
+      {
+        id: user._id,
+      },
+      process.env.REFRESH_TOKEN_SECRET,
+      {
+        expiresIn: "7d",
+      },
+    );
+
+    // Hash new refresh token
+    const hashedNewRefreshToken = crypto
+      .createHash("sha256")
+      .update(newRefreshToken)
+      .digest("hex");
+
+    // Replace old refresh token
+    user.refreshToken = hashedNewRefreshToken;
+
+    await user.save();
+
+    // Set new access token
     res.cookie("accessToken", newAccessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -184,17 +239,20 @@ export const refreshAccessToken = (req, res) => {
       maxAge: 15 * 60 * 1000,
     });
 
+    // Set new refresh token
+    res.cookie("refreshToken", newRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
     return res.status(200).json({
       success: true,
       message: "Access token refreshed",
     });
   } catch (error) {
-    console.error(error);
-
-    return res.status(401).json({
-      success: false,
-      message: "Invalid or expired refresh token",
-    });
+    next(error);
   }
 };
 
@@ -388,6 +446,60 @@ export const forgotPassword = async (req, res, next) => {
       success: true,
       message: "Password reset link generated",
       resetToken,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ---------------------------------- Reset-Password --------------------------------- //
+
+export const resetPassword = async (req, res, next) => {
+  try {
+    const { token } = req.params;
+    const { newPassword } = req.body;
+
+    // Validate token and password
+    if (!token || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Token and new password are required",
+      });
+    }
+
+    // Hash the received token
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    // Find user with valid token
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: {
+        $gt: Date.now(),
+      },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired reset token",
+      });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    user.password = hashedPassword;
+
+    // Remove reset token
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Password reset successfully",
     });
   } catch (error) {
     next(error);

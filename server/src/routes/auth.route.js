@@ -12,16 +12,19 @@ import {
   refreshAccessToken,
   changePassword,
   forgotPassword,
+  resetPassword,
 } from "../controllers/auth.controller.js";
 import { adminDashboard } from "../controllers/admin.controller.js";
 
 const router = express.Router();
 
-// === PUBLIC ROUTES ==== 
+// === PUBLIC ROUTES ====
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.post("/refresh", refreshAccessToken);
 router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
+router.post("/reset-password/:token", resetPassword);
 
 // === AUTHENTICATED ROUTES (General Users) ===
 router.get("/profile", authMiddleware, getProfile);
