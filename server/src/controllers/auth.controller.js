@@ -1,4 +1,5 @@
 import User from "../models/user.model.js";
+import Session from "../models/session.model.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
@@ -119,16 +120,19 @@ export const loginUser = async (req, res) => {
       .update(refreshToken)
       .digest("hex");
 
-    user.refreshToken = hashedRefreshToken;
-
-    await user.save();
+    // Session
+    await Session.create({
+      user: user._id,
+      refreshToken: hashedRefreshToken,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    });
 
     // Store Access Token in cookie
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 15 * 6 * 1000,
+      maxAge: 15 * 60 * 1000,
     });
 
     // Store Refresh Token in Cookie
@@ -175,7 +179,10 @@ export const refreshAccessToken = async (req, res, next) => {
     }
 
     // Verify refresh token
-    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+    const decoded = jwt.verify(
+      refreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+    );
 
     // Hash received refresh token
     const hashedRefreshToken = crypto
@@ -183,16 +190,26 @@ export const refreshAccessToken = async (req, res, next) => {
       .update(refreshToken)
       .digest("hex");
 
-    // Find user with this refresh token
-    const user = await User.findOne({
-      _id: decoded.id,
+    // Find session
+    const session = await Session.findOne({
+      user: decoded.id,
       refreshToken: hashedRefreshToken,
     });
 
-    if (!user) {
+    if (!session) {
       return res.status(401).json({
         success: false,
         message: "Invalid refresh token",
+      });
+    }
+
+    // Find user
+    const user = await User.findById(decoded.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
       });
     }
 
@@ -206,7 +223,7 @@ export const refreshAccessToken = async (req, res, next) => {
       process.env.JWT_SECRET,
       {
         expiresIn: "15m",
-      },
+      }
     );
 
     // Create new refresh token
@@ -217,7 +234,7 @@ export const refreshAccessToken = async (req, res, next) => {
       process.env.REFRESH_TOKEN_SECRET,
       {
         expiresIn: "7d",
-      },
+      }
     );
 
     // Hash new refresh token
@@ -226,10 +243,14 @@ export const refreshAccessToken = async (req, res, next) => {
       .update(newRefreshToken)
       .digest("hex");
 
-    // Replace old refresh token
-    user.refreshToken = hashedNewRefreshToken;
+    // Update session
+    session.refreshToken = hashedNewRefreshToken;
 
-    await user.save();
+    session.expiresAt = new Date(
+      Date.now() + 7 * 24 * 60 * 60 * 1000
+    );
+
+    await session.save();
 
     // Set new access token
     res.cookie("accessToken", newAccessToken, {
@@ -508,21 +529,39 @@ export const resetPassword = async (req, res, next) => {
 
 // ---------------------------------- LOGOUT --------------------------------- //
 
-export const logoutUser = (req, res) => {
-  res.clearCookie("accessToken", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-  });
+export const logoutUser = async (req, res, next) => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
 
-  res.clearCookie("refreshToken", {
-    httpOnly: true,
-    secrure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-  });
+    if (refreshToken) {
+      const hashedRefreshToken = crypto
+        .createHash("sha256")
+        .update(refreshToken)
+        .digest("hex");
 
-  return res.status(200).json({
-    success: true,
-    message: "Logout Successful",
-  });
+      await Session.findOneAndDelete({
+        user: req.user.id,
+        refreshToken: hashedRefreshToken,
+      });
+    }
+
+    res.clearCookie("accessToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
+
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Logout Successful",
+    });
+  } catch (error) {
+    next(error);
+  }
 };

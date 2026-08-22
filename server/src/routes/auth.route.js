@@ -30,7 +30,7 @@ router.post("/reset-password/:token", resetPassword);
 router.get("/profile", authMiddleware, getProfile);
 router.put("/profile", authMiddleware, updateProfile);
 router.patch("/change-password", authMiddleware, changePassword);
-router.post("/logout", logoutUser);
+router.post("/logout", authMiddleware, logoutUser);
 
 // === AUTHORIZED ROUTES (Admin Only) ===
 router.get("/admin", authMiddleware, authorizeRoles("admin"), adminDashboard);

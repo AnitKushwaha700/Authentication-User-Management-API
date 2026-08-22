@@ -37,11 +37,6 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
-    
-    refreshToken: {
-      type: String,
-      default: null,
-    },
   },
   {
     timestamps: true, // Automatically stores when the user was created and last updated
