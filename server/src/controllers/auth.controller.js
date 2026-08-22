@@ -3,6 +3,7 @@ import Session from "../models/session.model.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import { validatePassword } from "../validators/password.validator.js";
 
 // ------------------------------ REGISTER-USER ------------------------------------- //
 
@@ -15,6 +16,15 @@ export const registerUser = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "All fields are required",
+      });
+    }
+
+    const passwordError = validatePassword(password);
+
+    if (passwordError) {
+      return res.status(400).json({
+        success: false,
+        message: passwordError,
       });
     }
 
@@ -179,10 +189,7 @@ export const refreshAccessToken = async (req, res, next) => {
     }
 
     // Verify refresh token
-    const decoded = jwt.verify(
-      refreshToken,
-      process.env.REFRESH_TOKEN_SECRET
-    );
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
 
     // Hash received refresh token
     const hashedRefreshToken = crypto
@@ -223,7 +230,7 @@ export const refreshAccessToken = async (req, res, next) => {
       process.env.JWT_SECRET,
       {
         expiresIn: "15m",
-      }
+      },
     );
 
     // Create new refresh token
@@ -234,7 +241,7 @@ export const refreshAccessToken = async (req, res, next) => {
       process.env.REFRESH_TOKEN_SECRET,
       {
         expiresIn: "7d",
-      }
+      },
     );
 
     // Hash new refresh token
@@ -246,9 +253,7 @@ export const refreshAccessToken = async (req, res, next) => {
     // Update session
     session.refreshToken = hashedNewRefreshToken;
 
-    session.expiresAt = new Date(
-      Date.now() + 7 * 24 * 60 * 60 * 1000
-    );
+    session.expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
     await session.save();
 
@@ -382,6 +387,15 @@ export const changePassword = async (req, res, next) => {
       });
     }
 
+    const passwordError = validatePassword(newPassword);
+
+    if (passwordError) {
+      return res.status(400).json({
+        success: false,
+        message: passwordError,
+      });
+    }
+
     // 2. Find logged-in user
     const user = await User.findById(req.user.id);
 
@@ -485,6 +499,15 @@ export const resetPassword = async (req, res, next) => {
       return res.status(400).json({
         success: false,
         message: "Token and new password are required",
+      });
+    }
+
+    const passwordError = validatePassword(newPassword);
+
+    if (passwordError) {
+      return res.status(400).json({
+        success: false,
+        message: passwordError,
       });
     }
 

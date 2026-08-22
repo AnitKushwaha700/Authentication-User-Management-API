@@ -2,6 +2,7 @@ import express from "express";
 
 import authMiddleware from "../middlewares/auth.middleware.js";
 import authorizeRoles from "../middlewares/role.middleware.js";
+import { authRateLimiter } from "../middlewares/rateLimit.middleware.js";
 
 import {
   loginUser,
@@ -19,12 +20,12 @@ import { adminDashboard } from "../controllers/admin.controller.js";
 const router = express.Router();
 
 // === PUBLIC ROUTES ====
-router.post("/register", registerUser);
-router.post("/login", loginUser);
+router.post("/register", authRateLimiter, registerUser);
+router.post("/login", authRateLimiter, loginUser);
 router.post("/refresh", refreshAccessToken);
-router.post("/forgot-password", forgotPassword);
-router.post("/reset-password", resetPassword);
-router.post("/reset-password/:token", resetPassword);
+router.post("/forgot-password", authRateLimiter, forgotPassword);
+router.post("/reset-password", authRateLimiter, resetPassword);
+router.post("/reset-password/:token", authRateLimiter, resetPassword);
 
 // === AUTHENTICATED ROUTES (General Users) ===
 router.get("/profile", authMiddleware, getProfile);
