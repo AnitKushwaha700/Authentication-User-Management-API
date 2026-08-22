@@ -1,7 +1,9 @@
+// ----------------------------- Register Validator ----------------------------- //
+
 export const registerValidator = (req, res, next) => {
   const { name, email, password } = req.body;
 
-  // Required Fields
+  // Required fields
   if (!name || !email || !password) {
     return res.status(400).json({
       success: false,
@@ -9,7 +11,7 @@ export const registerValidator = (req, res, next) => {
     });
   }
 
-  // Name validations
+  // Name validation
   if (name.trim().length < 3) {
     return res.status(400).json({
       success: false,
@@ -17,7 +19,7 @@ export const registerValidator = (req, res, next) => {
     });
   }
 
-  // Email validations
+  // Email validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   if (!emailRegex.test(email)) {
@@ -27,17 +29,39 @@ export const registerValidator = (req, res, next) => {
     });
   }
 
-  // Password validations
-  if (password.length < 6) {
+  // Password validation
+  if (password.length < 8) {
     return res.status(400).json({
       success: false,
-      message: "Password must be at least 6 characters",
+      message: "Password must be at least 8 characters",
+    });
+  }
+
+  if (!/[A-Z]/.test(password)) {
+    return res.status(400).json({
+      success: false,
+      message: "Password must contain at least one uppercase letter",
+    });
+  }
+
+  if (!/[a-z]/.test(password)) {
+    return res.status(400).json({
+      success: false,
+      message: "Password must contain at least one lowercase letter",
+    });
+  }
+
+  if (!/[0-9]/.test(password)) {a
+    return res.status(400).json({
+      success: false,
+      message: "Password must contain at least one number",
     });
   }
 
   next();
 };
 
+// ----------------------------- Login Validator ----------------------------- //
 
 export const loginValidator = (req, res, next) => {
   const { email, password } = req.body;
@@ -50,7 +74,7 @@ export const loginValidator = (req, res, next) => {
     });
   }
 
-  // Email format
+  // Email validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   if (!emailRegex.test(email)) {
@@ -60,13 +84,8 @@ export const loginValidator = (req, res, next) => {
     });
   }
 
-  // Password length
-  if (password.length < 6) {
-    return res.status(400).json({
-      success: false,
-      message: "Password must be at least 6 characters",
-    });
-  }
-
+  // Don't enforce password strength during login.
+  // The password only needs to be present.
+  
   next();
 };

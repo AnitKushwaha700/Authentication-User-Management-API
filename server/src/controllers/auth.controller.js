@@ -4,6 +4,10 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { validatePassword } from "../validators/password.validator.js";
+import {
+  accessTokenCookieOptions,
+  refreshTokenCookieOptions,
+} from "../config/cookie.config.js";
 
 // ------------------------------ REGISTER-USER ------------------------------------- //
 
@@ -137,21 +141,9 @@ export const loginUser = async (req, res) => {
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
 
-    // Store Access Token in cookie
-    res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 15 * 60 * 1000,
-    });
+    res.cookie("accessToken", accessToken, accessTokenCookieOptions);
 
-    // Store Refresh Token in Cookie
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie("refreshToken", refreshToken, refreshTokenCookieOptions);
 
     return res.status(200).json({
       success: true,
@@ -188,16 +180,16 @@ export const refreshAccessToken = async (req, res, next) => {
       });
     }
 
-    // Verify refresh token
+    // 1. Verify refresh token
     const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
 
-    // Hash received refresh token
+    // 2. Hash received refresh token
     const hashedRefreshToken = crypto
       .createHash("sha256")
       .update(refreshToken)
       .digest("hex");
 
-    // Find session
+    // 3. Find session
     const session = await Session.findOne({
       user: decoded.id,
       refreshToken: hashedRefreshToken,
@@ -210,7 +202,7 @@ export const refreshAccessToken = async (req, res, next) => {
       });
     }
 
-    // Find user
+    // 4. Find user
     const user = await User.findById(decoded.id);
 
     if (!user) {
@@ -220,7 +212,7 @@ export const refreshAccessToken = async (req, res, next) => {
       });
     }
 
-    // Create new access token
+    // 5. Create NEW access token
     const newAccessToken = jwt.sign(
       {
         id: user._id,
@@ -233,7 +225,7 @@ export const refreshAccessToken = async (req, res, next) => {
       },
     );
 
-    // Create new refresh token
+    // 6. Create NEW refresh token
     const newRefreshToken = jwt.sign(
       {
         id: user._id,
@@ -244,34 +236,24 @@ export const refreshAccessToken = async (req, res, next) => {
       },
     );
 
-    // Hash new refresh token
+    // 7. Hash NEW refresh token
     const hashedNewRefreshToken = crypto
       .createHash("sha256")
       .update(newRefreshToken)
       .digest("hex");
 
-    // Update session
+    // 8. Update existing session
     session.refreshToken = hashedNewRefreshToken;
 
     session.expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
     await session.save();
 
-    // Set new access token
-    res.cookie("accessToken", newAccessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 15 * 60 * 1000,
-    });
+    // 9. Set NEW access token cookie
+    res.cookie("accessToken", newAccessToken, accessTokenCookieOptions);
 
-    // Set new refresh token
-    res.cookie("refreshToken", newRefreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    // 10. Set NEW refresh token cookie
+    res.cookie("refreshToken", newRefreshToken, refreshTokenCookieOptions);
 
     return res.status(200).json({
       success: true,
@@ -568,17 +550,9 @@ export const logoutUser = async (req, res, next) => {
       });
     }
 
-    res.clearCookie("accessToken", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-    });
+    res.clearCookie("accessToken", accessTokenCookieOptions);
 
-    res.clearCookie("refreshToken", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-    });
+    res.clearCookie("refreshToken", refreshTokenCookieOptions);
 
     return res.status(200).json({
       success: true,
