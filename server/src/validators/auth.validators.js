@@ -1,91 +1,68 @@
-// ----------------------------- Register Validator ----------------------------- //
+import { body, validationResult } from "express-validator";
 
-export const registerValidator = (req, res, next) => {
-  const { name, email, password } = req.body;
+// ------------------------ Register-Validator ------------------------------- //
 
-  // Required fields
-  if (!name || !email || !password) {
-    return res.status(400).json({
-      success: false,
-      message: "Name, email and password are required",
-    });
-  }
+export const registerValidator = [
+  body("name")
+    .trim()
+    .notEmpty()
+    .withMessage("Name is required")
+    .isLength({ min: 2, max: 50 })
+    .withMessage("Name must be between 2 and 50 characters"),
 
-  // Name validation
-  if (name.trim().length < 3) {
-    return res.status(400).json({
-      success: false,
-      message: "Name must be at least 3 characters",
-    });
-  }
+  body("email")
+    .trim()
+    .notEmpty()
+    .withMessage("Email is required")
+    .isEmail()
+    .withMessage("Please provide a valid email")
+    .normalizeEmail(),
 
-  // Email validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  body("password")
+    .notEmpty()
+    .withMessage("Password is required"),
 
-  if (!emailRegex.test(email)) {
-    return res.status(400).json({
-      success: false,
-      message: "Please provide a valid email",
-    });
-  }
+  (req, res, next) => {
+    const errors = validationResult(req);
 
-  // Password validation
-  if (password.length < 8) {
-    return res.status(400).json({
-      success: false,
-      message: "Password must be at least 8 characters",
-    });
-  }
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: errors.array(),
+      });
+    }
 
-  if (!/[A-Z]/.test(password)) {
-    return res.status(400).json({
-      success: false,
-      message: "Password must contain at least one uppercase letter",
-    });
-  }
+    next();
+  },
+];
 
-  if (!/[a-z]/.test(password)) {
-    return res.status(400).json({
-      success: false,
-      message: "Password must contain at least one lowercase letter",
-    });
-  }
+// ------------------------ Login-Validator ------------------------------- //
 
-  if (!/[0-9]/.test(password)) {a
-    return res.status(400).json({
-      success: false,
-      message: "Password must contain at least one number",
-    });
-  }
+export const loginValidator = [
+  body("email")
+    .trim()
+    .notEmpty()
+    .withMessage("Email is required")
+    .isEmail()
+    .withMessage("Please provide a valid email")
+    .normalizeEmail(),
 
-  next();
-};
+  body("password")
+    .notEmpty()
+    .withMessage("Password is required"),
 
-// ----------------------------- Login Validator ----------------------------- //
+  (req, res, next) => {
+    const errors = validationResult(req);
 
-export const loginValidator = (req, res, next) => {
-  const { email, password } = req.body;
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: errors.array(),
+      });
+    }
 
-  // Required fields
-  if (!email || !password) {
-    return res.status(400).json({
-      success: false,
-      message: "Email and password are required",
-    });
-  }
-
-  // Email validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  if (!emailRegex.test(email)) {
-    return res.status(400).json({
-      success: false,
-      message: "Please provide a valid email",
-    });
-  }
-
-  // Don't enforce password strength during login.
-  // The password only needs to be present.
-  
-  next();
-};
+    next();
+  },
+];

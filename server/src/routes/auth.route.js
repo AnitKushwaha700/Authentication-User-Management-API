@@ -16,12 +16,16 @@ import {
   resetPassword,
 } from "../controllers/auth.controller.js";
 import { adminDashboard } from "../controllers/admin.controller.js";
+import {
+  loginValidator,
+  registerValidator,
+} from "../validators/auth.validators.js";
 
 const router = express.Router();
 
 // === PUBLIC ROUTES ====
-router.post("/register", authRateLimiter, registerUser);
-router.post("/login", authRateLimiter, loginUser);
+router.post("/register", authRateLimiter, registerValidator, registerUser);
+router.post("/login", authRateLimiter, loginValidator, loginUser);
 router.post("/refresh", refreshAccessToken);
 router.post("/forgot-password", authRateLimiter, forgotPassword);
 router.post("/reset-password", authRateLimiter, resetPassword);

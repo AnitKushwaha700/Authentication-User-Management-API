@@ -2,7 +2,8 @@ import express from "express";
 
 import authMiddleware from "../middlewares/auth.middleware.js";
 import authorizeRoles from "../middlewares/role.middleware.js";
-
+import { updateRoleValidator } from "../validators/admin.validator.js";
+import { validateObjectId } from "../validators/common.validator.js";
 import {
   getAllUsers,
   getUserById,
@@ -10,19 +11,24 @@ import {
   deleteUser,
 } from "../controllers/admin.controller.js";
 
-import { updateRoleValidator } from "../validators/admin.validator.js";
-
 const router = express.Router();
 
 router.get("/users", authMiddleware, authorizeRoles("admin"), getAllUsers);
 
-router.get("/users/:id", authMiddleware, authorizeRoles("admin"), getUserById);
+router.get(
+  "/users/:id",
+  authMiddleware,
+  authorizeRoles("admin"),
+  validateObjectId,
+  getUserById,
+);
 
 router.patch(
   "/users/:id/role",
   authMiddleware,
   authorizeRoles("admin"),
   updateRoleValidator,
+  validateObjectId,
   updateUserRole,
 );
 
@@ -30,6 +36,7 @@ router.delete(
   "/users/:id",
   authMiddleware,
   authorizeRoles("admin"),
+  validateObjectId,
   deleteUser,
 );
 
