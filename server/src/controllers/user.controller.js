@@ -166,3 +166,53 @@ export const getMySessions = async (req, res, next) => {
     next(error);
   }
 };
+
+// -------------------------------- DELETE ONE SESSION -------------------------------- //
+
+export const deleteMySession = async (req, res, next) => {
+  try {
+    const { sessionId } = req.params;
+
+    const session = await Session.findOne({
+      _id: sessionId,
+      user: req.user.id,
+    });
+
+    if (!session) {
+      return res.status(404).json({
+        success: false,
+        message: "Session not found",
+      });
+    }
+
+    await Session.findByIdAndDelete(sessionId);
+
+    return res.status(200).json({
+      success: true,
+      message: "Session revoked successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+// -------------------------------- DELETE ALL SESSIONS -------------------------------- //
+
+export const deleteAllMySessions = async (req, res, next) => {
+  try {
+    const result = await Session.deleteMany({
+      user: req.user.id,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "All sessions revoked successfully",
+      data: {
+        deletedSessions: result.deletedCount,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
