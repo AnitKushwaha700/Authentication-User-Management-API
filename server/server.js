@@ -7,6 +7,7 @@ import cors from "cors";
 import connectDB from "./src/config/db.js";
 import authRouter from "./src/routes/auth.route.js";
 import adminRouter from "./src/routes/admin.route.js";
+import userRouter from "./src/routes/user.route.js";
 
 import notFoundMiddleware from "./src/middlewares/notFound.middleware.js";
 import errorMiddleware from "./src/middlewares/error.middleware.js";
@@ -38,6 +39,7 @@ app.use(cookieParser());
 
 app.use("/auth", authRouter);
 app.use("/admin", adminRouter);
+app.use("/users", userRouter);
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);
 

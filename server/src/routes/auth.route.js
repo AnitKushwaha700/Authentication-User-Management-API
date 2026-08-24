@@ -7,8 +7,6 @@ import { authRateLimiter } from "../middlewares/rateLimit.middleware.js";
 import {
   loginUser,
   registerUser,
-  getProfile,
-  updateProfile,
   logoutUser,
   refreshAccessToken,
   changePassword,
@@ -32,8 +30,6 @@ router.post("/reset-password", authRateLimiter, resetPassword);
 router.post("/reset-password/:token", authRateLimiter, resetPassword);
 
 // === AUTHENTICATED ROUTES (General Users) ===
-router.get("/profile", authMiddleware, getProfile);
-router.put("/profile", authMiddleware, updateProfile);
 router.patch("/change-password", authMiddleware, changePassword);
 router.post("/logout", authMiddleware, logoutUser);
 
