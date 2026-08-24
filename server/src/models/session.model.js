@@ -13,6 +13,11 @@ const sessionSchema = new mongoose.Schema(
       required: true,
     },
 
+    userAgent: {
+      type: String,
+      default: null,
+    },
+
     expiresAt: {
       type: Date,
       required: true,

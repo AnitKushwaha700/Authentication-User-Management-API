@@ -146,3 +146,23 @@ export const deleteMyAccount = async (req, res, next) => {
     next(error);
   }
 };
+
+// -------------------------------- GET MY SESSIONS -------------------------------- //
+
+export const getMySessions = async (req, res, next) => {
+  try {
+    const sessions = await Session.find({
+      user: req.user.id,
+    })
+      .select("-refreshToken")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      message: "Sessions fetched successfully",
+      data: sessions,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

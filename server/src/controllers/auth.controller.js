@@ -138,6 +138,7 @@ export const loginUser = async (req, res) => {
     await Session.create({
       user: user._id,
       refreshToken: hashedRefreshToken,
+      userAgent: req.get("user-agent"),
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
 
