@@ -9,7 +9,9 @@ import {
   getUserById,
   updateUserRole,
   deleteUser,
+  updateUserStatus,
 } from "../controllers/admin.controller.js";
+import { deleteMySession } from "../controllers/user.controller.js";
 
 const router = express.Router();
 
@@ -30,6 +32,14 @@ router.patch(
   updateRoleValidator,
   validateObjectId,
   updateUserRole,
+);
+
+router.patch(
+  "/users/:id/status",
+  authMiddleware,
+  authorizeRoles("admin"),
+  validateObjectId,
+  updateUserStatus,
 );
 
 router.delete(

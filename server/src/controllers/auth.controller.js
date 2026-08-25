@@ -95,6 +95,13 @@ export const loginUser = async (req, res) => {
       });
     }
 
+    if (!user.isActive) {
+      return res.status(403).json({
+        success: false,
+        message: "Your account has been blocked",
+      });
+    }
+
     // Compare Password
     const isPasswordMatch = await bcrypt.compare(password, user.password);
 

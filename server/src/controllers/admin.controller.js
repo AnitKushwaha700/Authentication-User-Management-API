@@ -1,5 +1,6 @@
-import User from "../models/user.model.js";
 import mongoose from "mongoose";
+import User from "../models/user.model.js";
+import Session from "../models/session.model.js";
 
 // ------------------------------ Admin-Dashboard ------------------------------------- //
 
@@ -167,5 +168,65 @@ export const deleteUser = async (req, res, next) => {
       success: false,
       message: "Internal Server Error",
     });
+  }
+};
+
+// -------------------------------- BLOCK / UNBLOCK USER -------------------------------- //
+
+export const updateUserStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { isActive } = req.body;
+
+    if (typeof isActive !== "boolean") {
+      return res.status(400).json({
+        success: false,
+        message: "isActive must be a boolean",
+      });
+    }
+
+    const user = await User.findById(id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Prevent admin from blocking their own account
+    if (user._id.toString() === req.user.id) {
+      return res.status(400).json({
+        success: false,
+        message: "You cannot change your own account status",
+      });
+    }
+
+    user.isActive = isActive;
+
+    await user.save();
+
+    // If blocking user, revoke all their sessions
+    if (!isActive) {
+      await Session.deleteMany({
+        user: user._id,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: isActive
+        ? "User activated successfully"
+        : "User blocked successfully",
+      data: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isActive: user.isActive,
+      },
+    });
+  } catch (error) {
+    next(error);
   }
 };

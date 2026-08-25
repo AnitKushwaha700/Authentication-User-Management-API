@@ -5,13 +5,13 @@ import authorizeRoles from "../middlewares/role.middleware.js";
 import { authRateLimiter } from "../middlewares/rateLimit.middleware.js";
 
 import {
-  loginUser,
   registerUser,
-  logoutUser,
+  loginUser,
   refreshAccessToken,
-  changePassword,
+  logoutUser,
   forgotPassword,
   resetPassword,
+  changePassword,
 } from "../controllers/auth.controller.js";
 import { adminDashboard } from "../controllers/admin.controller.js";
 import {

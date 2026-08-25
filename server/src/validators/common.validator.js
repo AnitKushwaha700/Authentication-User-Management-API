@@ -12,3 +12,16 @@ export const validateObjectId = (req, res, next) => {
 
   next();
 };
+
+export const validateSessionId = (req, res, next) => {
+  const { sessionId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(sessionId)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid session ID",
+    });
+  }
+  
+  next();
+};
