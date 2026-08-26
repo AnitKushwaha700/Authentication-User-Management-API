@@ -197,10 +197,28 @@ export const updateUserRole = async (req, res, next) => {
       });
     }
 
+    // Prevent admin from changing their own role
+    if (user._id.toString() === req.user.id) {
+      return res.status(400).json({
+        success: false,
+        message: "You cannot change your own role",
+      });
+    }
+
+    user.role = role;
+
+    await user.save();
+
     return res.status(200).json({
       success: true,
       message: "User role updated successfully",
-      data: user,
+      data: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isActive: user.isActive,
+      },
     });
   } catch (error) {
     next(error);

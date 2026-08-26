@@ -9,7 +9,6 @@ export const validateObjectId = (req, res, next) => {
       message: "Invalid user ID",
     });
   }
-
   next();
 };
 
@@ -25,3 +24,27 @@ export const validateSessionId = (req, res, next) => {
   
   next();
 };
+
+// ------------------------ Validate-Role ------------------------------- //
+
+export const validateRole = (req, res, next) => {
+  const { role } = req.body;
+
+  const allowedRoles = [
+    "user",
+    "admin",
+    "restaurant",
+  ];
+
+  if (!allowedRoles.includes(role)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid role",
+      allowedRoles,
+    });
+  }
+
+  next();
+};
+
+

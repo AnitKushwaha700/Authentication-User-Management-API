@@ -2,8 +2,13 @@ import express from "express";
 
 import authMiddleware from "../middlewares/auth.middleware.js";
 import authorizeRoles from "../middlewares/role.middleware.js";
+
 import { updateRoleValidator } from "../validators/admin.validator.js";
-import { validateObjectId } from "../validators/common.validator.js";
+import {
+  validateObjectId,
+  validateRole,
+} from "../validators/common.validator.js";
+
 import {
   getAllUsers,
   getUserById,
@@ -29,8 +34,9 @@ router.patch(
   "/users/:id/role",
   authMiddleware,
   authorizeRoles("admin"),
-  updateRoleValidator,
   validateObjectId,
+  updateRoleValidator,
+  validateRole,
   updateUserRole,
 );
 
