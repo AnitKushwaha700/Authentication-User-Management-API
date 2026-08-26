@@ -31,12 +31,95 @@ export const adminDashboard = async (req, res) => {
 
 export const getAllUsers = async (req, res, next) => {
   try {
-    const users = await User.find().select("-password");
+    const {
+      page = 1,
+      limit = 10,
+      search = "",
+      role,
+      isActive,
+      sort = "createdAt",
+      order = "desc",
+    } = req.query;
+
+    const pageNumber = Math.max(Number(page), 1);
+
+    const limitNumber = Math.min(Math.max(Number(limit), 1), 100);
+
+    const skip = (pageNumber - 1) * limitNumber;
+
+    const filter = {};
+
+    // Search by name or email
+    if (search.trim()) {
+      filter.$or = [
+        {
+          name: {
+            $regex: search.trim(),
+            $options: "i",
+          },
+        },
+        {
+          email: {
+            $regex: search.trim(),
+            $options: "i",
+          },
+        },
+      ];
+    }
+
+    // Role filter
+    if (role) {
+      filter.role = role;
+    }
+
+    // Active/inactive filter
+    if (isActive !== undefined) {
+      if (isActive === "true") {
+        filter.isActive = true;
+      }
+
+      if (isActive === "false") {
+        filter.isActive = false;
+      }
+    }
+
+    // Allowed sorting fields
+    const allowedSortFields = ["name", "email", "role", "createdAt"];
+
+    const sortField = allowedSortFields.includes(sort) ? sort : "createdAt";
+
+    const sortOrder = order === "asc" ? 1 : -1;
+
+    const [users, totalUsers] = await Promise.all([
+      User.find(filter)
+        .select("-password")
+        .sort({
+          [sortField]: sortOrder,
+        })
+        .skip(skip)
+        .limit(limitNumber),
+
+      User.countDocuments(filter),
+    ]);
+
+    const totalPages = Math.ceil(totalUsers / limitNumber);
 
     return res.status(200).json({
       success: true,
-      message: "Users Fetched Successfully",
-      data: users,
+      message: "Users fetched successfully",
+
+      data: {
+        users,
+
+        pagination: {
+          currentPage: pageNumber,
+          limit: limitNumber,
+          totalUsers,
+          totalPages,
+          hasNextPage: pageNumber < totalPages,
+          hasPreviousPage: pageNumber > 1,
+        },
+      },
     });
   } catch (error) {
     next(error);
