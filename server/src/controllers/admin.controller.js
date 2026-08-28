@@ -171,25 +171,8 @@ export const updateUserRole = async (req, res, next) => {
     const { id } = req.params;
     const { role } = req.body;
 
-    // Validate MongoDB ID
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid user ID",
-      });
-    }
+    const user = await User.findById(id);
 
-    // Find and update user
-    const user = await User.findByIdAndUpdate(
-      id,
-      { role },
-      {
-        new: true,
-        runValidators: true,
-      },
-    ).select("-password");
-
-    // User not found
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -197,7 +180,6 @@ export const updateUserRole = async (req, res, next) => {
       });
     }
 
-    // Prevent admin from changing their own role
     if (user._id.toString() === req.user.id) {
       return res.status(400).json({
         success: false,
@@ -208,6 +190,11 @@ export const updateUserRole = async (req, res, next) => {
     user.role = role;
 
     await user.save();
+
+    // Revoke existing sessions after role change
+    await Session.deleteMany({
+      user: user._id,
+    });
 
     return res.status(200).json({
       success: true,
